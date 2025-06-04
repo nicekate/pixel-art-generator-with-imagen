@@ -1,9 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { generatePixelArtImage } from './services/geminiService';
+import { generatePixelArtImage } from './services/apiService';
 import { LoadingIndicator } from './components/LoadingIndicator';
 import { ErrorMessage } from './components/ErrorMessage';
 import { ImageDisplayArea } from './components/ImageDisplayArea';
 import { SparklesIcon, SunIcon, MoonIcon } from './components/Icons';
+
+const MAX_PROMPT_LENGTH = 200;
+
+function sanitizeInput(input: string): string {
+  return input.replace(/[^\w\s.,!?'-]/g, '');
+}
 
 const App: React.FC = () => {
   const [prompt, setPrompt] = useState<string>('');
@@ -13,10 +19,6 @@ const App: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 
   useEffect(() => {
-    if (typeof process === 'undefined' || !process.env || !process.env.API_KEY) {
-      setError("API_KEY environment variable is not set. Please configure it to use the application.");
-      console.error("CRITICAL: API_KEY is not defined. Ensure it is set in your environment.");
-    }
      // Apply dark/light mode to HTML element
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -27,24 +29,25 @@ const App: React.FC = () => {
   }, [isDarkMode]);
 
   const handleGenerateImage = useCallback(async () => {
-    if (!prompt.trim()) {
+    const trimmed = prompt.trim();
+    if (!trimmed) {
       setError('Please enter a prompt to generate pixel art.');
       return;
     }
-    if (typeof process === 'undefined' || !process.env || !process.env.API_KEY) {
-       setError("API_KEY environment variable is not set. Cannot generate image.");
-       return;
+    if (trimmed.length > MAX_PROMPT_LENGTH) {
+      setError('Prompt too long. Please keep it under 200 characters.');
+      return;
     }
+    const sanitizedPrompt = sanitizeInput(trimmed);
 
     setIsLoading(true);
     setError(null);
     setGeneratedImageUrl(null);
 
     try {
-      const imageUrl = await generatePixelArtImage(prompt);
+      const imageUrl = await generatePixelArtImage(sanitizedPrompt);
       setGeneratedImageUrl(imageUrl);
     } catch (err) {
-      console.error(err);
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred while generating the image.';
       setError(errorMessage);
     } finally {
@@ -92,6 +95,7 @@ const App: React.FC = () => {
                   type="text"
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
+                  maxLength={MAX_PROMPT_LENGTH}
                   placeholder="e.g., a knight battling a dragon"
                   className={`flex-grow p-3 rounded-lg border outline-none transition-all duration-150
                               ${isDarkMode ? 'bg-gray-700 border-gray-600 focus:ring-purple-500 focus:border-purple-500 text-white' 
@@ -106,7 +110,7 @@ const App: React.FC = () => {
                 />
                 <button
                   onClick={handleGenerateImage}
-                  disabled={isLoading || !prompt.trim() || (typeof process !== 'undefined' && process.env && !process.env.API_KEY)}
+                  disabled={isLoading || !prompt.trim() || prompt.trim().length > MAX_PROMPT_LENGTH}
                   className={`w-full sm:w-auto px-6 py-3 font-semibold rounded-lg shadow-md transition-all duration-150 ease-in-out
                               flex items-center justify-center
                               focus:outline-none focus:ring-2 focus:ring-opacity-50
