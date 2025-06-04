@@ -1,0 +1,6 @@
+{
+  "name": "Pixel Art Generator with Imagen",
+  "description": "A web application that uses Google's Imagen model (via Gemini API) to generate pixel art images from text prompts.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
