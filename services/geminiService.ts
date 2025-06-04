@@ -1,9 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Ensure API_KEY is accessed correctly, considering browser environment
-const apiKey = typeof process !== 'undefined' && process.env && process.env.API_KEY 
-    ? process.env.API_KEY 
-    : undefined;
+// API key is injected at build time via Vite's define config
+const apiKey = process.env.API_KEY;
 
 let ai: GoogleGenAI | null = null;
 if (apiKey) {

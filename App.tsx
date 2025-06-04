@@ -5,6 +5,9 @@ import { ErrorMessage } from './components/ErrorMessage';
 import { ImageDisplayArea } from './components/ImageDisplayArea';
 import { SparklesIcon, SunIcon, MoonIcon } from './components/Icons';
 
+// API key value is injected at build time
+const API_KEY = process.env.API_KEY;
+
 const App: React.FC = () => {
   const [prompt, setPrompt] = useState<string>('');
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
@@ -13,7 +16,7 @@ const App: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 
   useEffect(() => {
-    if (typeof process === 'undefined' || !process.env || !process.env.API_KEY) {
+    if (!API_KEY) {
       setError("API_KEY environment variable is not set. Please configure it to use the application.");
       console.error("CRITICAL: API_KEY is not defined. Ensure it is set in your environment.");
     }
@@ -31,7 +34,7 @@ const App: React.FC = () => {
       setError('Please enter a prompt to generate pixel art.');
       return;
     }
-    if (typeof process === 'undefined' || !process.env || !process.env.API_KEY) {
+    if (!API_KEY) {
        setError("API_KEY environment variable is not set. Cannot generate image.");
        return;
     }
@@ -106,7 +109,7 @@ const App: React.FC = () => {
                 />
                 <button
                   onClick={handleGenerateImage}
-                  disabled={isLoading || !prompt.trim() || (typeof process !== 'undefined' && process.env && !process.env.API_KEY)}
+                  disabled={isLoading || !prompt.trim() || !API_KEY}
                   className={`w-full sm:w-auto px-6 py-3 font-semibold rounded-lg shadow-md transition-all duration-150 ease-in-out
                               flex items-center justify-center
                               focus:outline-none focus:ring-2 focus:ring-opacity-50
